@@ -1,0 +1,54 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+#define SERVER_ADDRESS "203.106.71.185"  
+#define SERVER_PORT 8443
+
+int main() {
+    int client_socket;
+    struct sockaddr_in server_addr;
+
+    // Create socket
+    client_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_socket == -1) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Set up server address
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    if (inet_pton(AF_INET, SERVER_ADDRESS, &server_addr.sin_addr) <= 0) {
+        perror("Invalid address / Address not supported");
+        exit(EXIT_FAILURE);
+    }
+
+    // Connect to the server
+    if (connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+        perror("Connection failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Send UiTM Student ID to the server
+    char student_id[] = "2021653038"; 
+    send(client_socket, student_id, strlen(student_id), 0);
+
+    // Receive and display the server's response
+    char buffer[1024];
+    memset(buffer, 0, sizeof(buffer));
+    int bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
+    if (bytes_received > 0) {
+        printf("Server response: %s\n", buffer);
+    } else {
+        printf("Failed to receive server response\n");
+    }
+
+    // Close the socket
+    close(client_socket);
+
+    return 0;
+}
+
